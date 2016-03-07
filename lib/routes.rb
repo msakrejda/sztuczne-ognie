@@ -13,6 +13,9 @@ Routes = Rack::Builder.new do
   use Rack::MethodOverride
   use Rack::SSL if Config.force_ssl?
 
+  use Rack::Static, urls: ['/favicon.ico'], root: 'static'
+  use Rack::Static, urls: ['/static']
+
   use Pliny::Router do
     # mount all endpoints here
     mount Endpoints::Health
