@@ -1,0 +1,14 @@
+{
+  "name": "sztuczne-ognie",
+  "description": "A new instance of sztuczne-ognie",
+
+  "env": {
+    "APP_NAME": "sztuczne-ognie",
+    "DEPLOYMENT": "production",
+    "PLINY_ENV": "production"
+  },
+
+  "addons": [
+    "heroku-postgresql"
+  ]
+}
