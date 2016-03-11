@@ -33,10 +33,11 @@ let config = {
       {
         test: /\.scss$/,
         loader: 'style!css!autoprefixer?browsers=last 2 version!sass?outputStyle=expanded'
-      }, {
+      },
+      {
         test: /\.jsx?$/,
-        loader: 'babel',
-        include: [path.resolve('./src/')],
+        loaders: ['babel'],
+        include: [path.resolve('client-assets/')]
       }
     ],
     noParse: /\.min\.js/,
