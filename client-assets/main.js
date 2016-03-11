@@ -1,16 +1,21 @@
-console.log('hello world')
-
-
-
 // Card (color, rank)
 
+// Player (id, name, hand []Card, knowledge []CardInfo)
 
-deck = []
+// CardInfo (rank, color, cards[])
 
-game_state = {
+import _ from 'lodash'
+
+const gameState = {
   fuse_counter: 4,
   hint_tokens: 8,
-  
-  
-
+  players: [],
+  deck: [],
+  discarded: []
 }
+
+const initialize = (message) => {
+  console.log(message)
+}
+
+initialize('hello world')
