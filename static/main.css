@@ -1,0 +1,21 @@
+body {
+    background-color: black;
+}
+
+.card {
+    width: 180;
+    height: 280;
+
+    color: blue;
+    background-color: white;
+    border-radius: 10px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-inner {
+    text-align: center;
+    font-size: 3em;
+}

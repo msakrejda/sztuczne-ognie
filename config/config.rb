@@ -33,4 +33,15 @@ module Config
   override :root,             File.expand_path("../../", __FILE__), string
   override :timeout,          10,    int
   override :versioning,       false, bool
+
+  override :fuse_len          3, int
+  override :hint_count        7, int
+
+  def self.colors
+    %w(red green blue white yellow)
+  end
+
+  def self.values
+    (1..5).to_a
+  end
 end
