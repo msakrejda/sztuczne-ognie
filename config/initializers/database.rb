@@ -1,3 +1,5 @@
+Sequel.extension :pg_json_ops
+
 database_setup_proc = lambda do |conn|
   # identify postgres connections coming from this process in pg_stat_activity
   process_identifier = ENV["DYNO"] || File.basename($0).gsub(/\W+/, "_")
@@ -8,3 +10,5 @@ end
 DB = Sequel.connect(Config.database_url,
   max_connections: Config.db_pool,
   after_connect: database_setup_proc)
+
+DB.extension :pg_json

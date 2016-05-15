@@ -12,6 +12,7 @@ module Initializer
 
   def self.require_lib
     require! %w(
+      lib/errors
       lib/serializers/base
       lib/serializers/**/*
       lib/endpoints/base
