@@ -1,6 +1,32 @@
 require "spec_helper"
 
 describe Game do
+  describe Game::Card do
+    describe "#is_color?" do
+      let(:card) { Game::Card.new(id: 0, color: 'red', value: 1) }
+      
+      it "is true when the card is of the specified color" do
+        expect(card.is_color?('red')).to be true
+      end
+
+      it "is false when the card is of another color" do
+        expect(card.is_color?('green')).to be false
+      end
+    end
+
+    describe "#is_value?" do
+      let(:card) { Game::Card.new(id: 0, color: 'red', value: 1) }
+      
+      it "is true when the card is of the specified value" do
+        expect(card.is_value?(1)).to be true
+      end
+
+      it "is false when the card is of another value" do
+        expect(card.is_value?(3)).to be false
+      end
+    end
+  end
+
   describe Game::Deck do
     describe "#empty?" do
       it "is true with an empty deck" do
