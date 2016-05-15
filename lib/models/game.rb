@@ -61,6 +61,8 @@ class Game < Sequel::Model
   end
 
   class Hand
+    attr_reader :state
+
     def initialize(state)
       @state = state
     end
@@ -73,7 +75,7 @@ class Game < Sequel::Model
       @state.fetch(:cards).push(card.state)
     end
 
-    def add_hint(card: card, color: nil, value: nil)
+    def add_hint(card:, color: nil, value: nil)
       hint = { card_id: card.id }
       hint[:color] = color unless color.nil?
       hint[:value] = value unless value.nil?
@@ -125,7 +127,7 @@ class Game < Sequel::Model
 
       lane.push(card.state)
 
-      if @state.values.all? { |lane| lane.length == Config.values.length }
+      if @state.values.all? { |l| l.length == Config.values.length }
         self.finished_at = Time.now
       end
 
@@ -220,11 +222,11 @@ class Game < Sequel::Model
   end
 
   def deck
-    Deck.new(state.fetch(:deck))
+    @deck ||= Deck.new(state.fetch(:deck))
   end
 
   def field
-    Field.new(self, state.fetch(:field))
+    @field ||= Field.new(self, state.fetch(:field))
   end
 
   def hand_for(player)
@@ -297,6 +299,27 @@ class Game < Sequel::Model
 
   def can_discard?
     state.fetch(:hint_counter) < Config.hint_count
+  end
+
+  def hand_size
+    if players.count < 4
+      5
+    else
+      4
+    end
+  end
+
+  def deal
+    hands = players.each_with_object({}) do |player, obj|
+      obj[player.id] = Hand.new(player_id: player.id, cards: [], hints: [])
+    end
+    hand_size.times do |n|
+      players.each do |p|
+        hand = hands[p.id]
+        hand.add(deck.draw)
+      end
+    end
+    state[:hands] = hands.values.map(&:state)
   end
 
   def new_state

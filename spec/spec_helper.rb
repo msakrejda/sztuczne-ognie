@@ -18,6 +18,7 @@ require_relative "../lib/initializer"
 Pliny::Utils.require_glob("#{Config.root}/spec/spec_support/**/*.rb")
 
 RSpec.configure do |config|
+
   config.before :suite do
     DatabaseCleaner.clean_with(:truncation)
     DatabaseCleaner.strategy = :transaction
@@ -36,7 +37,7 @@ RSpec.configure do |config|
   end
 
   config.disable_monkey_patching!
-  config.expect_with :minitest
+  config.expect_with :rspec
   config.run_all_when_everything_filtered = true
   config.filter_run :focus
 
@@ -45,6 +46,8 @@ RSpec.configure do |config|
   # the seed, which is printed after each run.
   #     --seed 1234
   config.order = 'random'
+
+  config.expose_dsl_globally = true
 
   # the rack app to be tested with rack-test:
   def app

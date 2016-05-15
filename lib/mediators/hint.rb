@@ -1,5 +1,5 @@
 class Mediators::Hint < Mediators::Base
-  def initialize(game:, target_player:, color:, value:)
+  def initialize(game:, platarget_player:, color:, value:)
     @game = game
     @player = player
     @card_id = card_id
@@ -8,6 +8,7 @@ class Mediators::Hint < Mediators::Base
   end
 
   def call
+    # TODO: just make this separate mediators and separate endpoints
     if @color.nil? != @value.nil?
       raise ArgumentError, "Must specify one and only one of color (#{@color.inspect}) or value (#{@value.inspect}"
     elsif @value.nil?
