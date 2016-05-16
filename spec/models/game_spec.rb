@@ -124,13 +124,11 @@ describe Game do
         expect(hand.state[:hints]).to match_array([ hint ])
       end
 
-      it "refuses duplicate hints" do
+      it "ignores duplicate hints" do
         hint = { card_id: 1, value: 3 }
         hand.add_hint(**hint)
-
-        expect do
-          hand.add_hint(**hint)
-        end.to raise_error(ArgumentError)
+        hand.add_hint(**hint)
+        expect(hand.state[:hints]).to match_array([ hint ])
       end
     end
   end
