@@ -60,4 +60,78 @@ describe Game do
       end
     end
   end
+
+  describe Game::Hand do
+    let(:card) { { id: 0, color: 'blue', value: 3 } }
+
+    describe "#cards" do
+      let(:hand) { Game::Hand.new(cards: [ card ]) }
+
+      it "maps card state to card objects" do
+        cards = hand.cards
+        expect(cards.length).to eq(1)
+
+        card_in_hand = cards.first
+        expect(card_in_hand).to be_a(Game::Card)
+        expect(card_in_hand.state).to eq(card)
+      end
+    end
+
+    describe "#add" do
+      let(:hand) { Game::Hand.new(cards: []) }
+
+      it "adds a card to the hand" do
+        hand.add(Game::Card.new(card))
+        cards = hand.state.fetch(:cards)
+        expect(cards.length).to eq(1)
+        c = cards.first
+        expect(c).to eq(card)
+      end
+    end
+
+    describe "#remove" do
+      let(:other_card) { { id: 2, color: 'green', value: 3 } }
+      let(:hand)       { Game::Hand.new(cards: [ card, other_card ]) }
+
+      it "removes a card from the hand and returns it" do
+        result = hand.remove(card[:id])
+        cards = hand.state.fetch(:cards)
+        expect(cards.length).to eq(1)
+        expect(cards.first).to eq(other_card)
+
+        expect(result.state).to eq(card)
+      end
+
+      it "raises if the card is not in hand" do
+        expect do
+          hand.remove(999)
+        end.to raise_error(ArgumentError)
+      end
+    end
+
+    describe "#add_hint" do
+      let(:hand) { Game::Hand.new(hints: []) }
+
+      it "adds hints about color" do
+        hint = { card_id: 1, color: 'red' }
+        hand.add_hint(**hint)
+        expect(hand.state[:hints]).to match_array([ hint ])
+      end
+
+      it "adds hints about value" do
+        hint = { card_id: 1, value: 3 }
+        hand.add_hint(**hint)
+        expect(hand.state[:hints]).to match_array([ hint ])
+      end
+
+      it "refuses duplicate hints" do
+        hint = { card_id: 1, value: 3 }
+        hand.add_hint(**hint)
+
+        expect do
+          hand.add_hint(**hint)
+        end.to raise_error(ArgumentError)
+      end
+    end
+  end
 end

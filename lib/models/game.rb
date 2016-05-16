@@ -68,24 +68,34 @@ class Game < Sequel::Model
     end
 
     def cards
-      @state.fetch(:cards).map { |c| Card.new(c) }
+      state.fetch(:cards).map { |c| Card.new(c) }
     end
 
     def add(card)
-      @state.fetch(:cards).push(card.state)
+      state.fetch(:cards).push(card.state)
     end
 
-    def add_hint(card:, color: nil, value: nil)
-      hint = { card_id: card.id }
+    def has_hint?(card_id:, color: nil, value: nil)
+      state[:hints].any? do |hint|
+        hint[:card_id] == card_id && hint[:color] == color && hint[:value] = value
+      end
+    end
+
+    def add_hint(card_id:, color: nil, value: nil)
+      if has_hint?(card_id: card_id, color: color, value: value)
+        raise ArgumentError, "Cannot duplicated existing hint"
+      end
+
+      hint = { card_id: card_id }
       hint[:color] = color unless color.nil?
       hint[:value] = value unless value.nil?
 
-      hand[:hints].push(hint).uniq!
+      state[:hints].push(hint)
     end
 
     def remove(card_id)
       removed = nil
-      @state.fetch(:cards).reject! do |c|
+      state.fetch(:cards).reject! do |c|
         if c.fetch(:id) == card_id
           removed = c
           true
