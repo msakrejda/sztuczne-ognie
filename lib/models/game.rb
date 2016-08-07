@@ -176,7 +176,7 @@ class Game < Sequel::Model
   end
 
   def play(player, card_id)
-     taking_turn(player) do
+    taking_turn(player) do
       hand = hand_for(player)
       card = hand.remove(card_id)
 
