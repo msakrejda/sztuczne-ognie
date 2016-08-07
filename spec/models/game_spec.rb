@@ -2,27 +2,19 @@ require "spec_helper"
 
 describe Game do
   describe Game::Card do
-    describe "#is_color?" do
+    describe "#color" do
       let(:card) { Game::Card.new(id: 0, color: 'red', value: 1) }
       
-      it "is true when the card is of the specified color" do
-        expect(card.is_color?('red')).to be true
-      end
-
-      it "is false when the card is of another color" do
-        expect(card.is_color?('green')).to be false
+      it "is the card's color" do
+        expect(card.color).to eq('red')
       end
     end
 
-    describe "#is_value?" do
+    describe "#value" do
       let(:card) { Game::Card.new(id: 0, color: 'red', value: 1) }
       
-      it "is true when the card is of the specified value" do
-        expect(card.is_value?(1)).to be true
-      end
-
-      it "is false when the card is of another value" do
-        expect(card.is_value?(3)).to be false
+      it "is the card's value" do
+        expect(card.value).to eq(1)
       end
     end
   end
@@ -129,6 +121,85 @@ describe Game do
         hand.add_hint(**hint)
         hand.add_hint(**hint)
         expect(hand.state[:hints]).to match_array([ hint ])
+      end
+    end
+  end
+
+  describe Game::Field do
+    let(:game) { Game.new }
+
+    describe "#playable?" do
+      it "is true if there is a position for this card" do
+        card = Game::Card.new(id: 0, color: 'red', value: 1)
+        f = Game::Field.new(game, {})
+        expect(f.playable?(card)).to be true
+      end
+
+      it "is false if there is no position for this card" do
+        card = Game::Card.new(id: 0, color: 'red', value: 2)
+        f = Game::Field.new(game, {})
+        expect(f.playable?(card)).to be false
+      end
+    end
+
+    describe "#play" do
+      it "raises if the card is not playable" do
+        card = Game::Card.new(id: 0, color: 'red', value: 2)
+        f = Game::Field.new(game, {})
+        expect(f.playable?(card)).to be false
+        expect do
+          f.play(card)
+        end.to raise_error(ArgumentError)
+      end
+
+      it "places the card in an existing lane" do
+        card = Game::Card.new(id: 0, color: 'red', value: 1)
+        f = Game::Field.new(game, 'red' => [])
+        expect(f.playable?(card)).to be true
+        f.play(card)
+        expect(f.lane(card.color)).to include(card.state)
+      end
+
+      it "allocates a new lane if necessary" do
+        card = Game::Card.new(id: 0, color: 'red', value: 1)
+        f = Game::Field.new(game, {})
+        expect(f.playable?(card)).to be true
+        f.play(card)
+        expect(f.lane(card.color)).to include(card.state)
+      end
+
+      it "returns true if the card completes a lane" do
+        card = Game::Card.new(id: 0, color: 'red', value: 5)
+        f = Game::Field.new(game, 'red' => 4.times.map do |n|
+                              Game::Card.new(id: n, color: 'red', value: (n + 1))
+                            end)
+        expect(f.playable?(card)).to be true
+        expect(f.play(card)).to be true
+      end
+
+      it "returns false if the card does not complete a lane" do
+        card = Game::Card.new(id: 0, color: 'red', value: 1)
+        f = Game::Field.new(game, {})
+        expect(f.playable?(card)).to be true
+        expect(f.play(card)).to be false
+      end
+
+      it "marks the game as finished if all lanes have been completed" do
+        card = Game::Card.new(id: 0, color: 'red', value: 5)
+        id = 0
+        f = Game::Field.new(game, Hash[Config.colors.map do |color|
+                                   [ color, Config.values.reject do |v|
+                                       v == 5 && color == 'red'
+                                     end.map do |v|
+                                       id += 1
+                                       Game::Card.new(id: id, color: color,
+                                                      value: v)
+                                     end ]
+                                 end])
+        expect(f.playable?(card)).to be true
+        before = Time.now
+        expect(f.play(card)).to be true
+        expect(game.finished_at).to be > before
       end
     end
   end

@@ -36,12 +36,12 @@ class Game < Sequel::Model
       @state.fetch(:id)
     end
 
-    def is_color?(color)
-      @state.fetch(:color) == color
+    def color
+      @state.fetch(:color)
     end
 
-    def is_value?(value)
-      @state.fetch(:value) == value
+    def value
+      @state.fetch(:value)
     end
   end
 
@@ -99,7 +99,8 @@ class Game < Sequel::Model
   end
 
   class Field
-    def initialize(state)
+    def initialize(game, state)
+      @game = game
       @state = state
     end
 
@@ -112,23 +113,27 @@ class Game < Sequel::Model
       end
     end
 
+    def lane(color)
+      @state.fetch(color, [])
+    end
+
     def play(card)
       unless playable?(card)
         raise ArgumentError, "Card #{card} is not playable this turn"
       end
 
-      lane = @state[card.color.to_sym]
+      lane = @state[card.color]
       if lane.nil?
         lane = []
-        @state[card.color.to_sym] = lane
+        @state[card.color] = lane
       end
 
-      completes = lane.length + 1 == Config.values.length
-
+      tot_count = Config.values.length
+      completes = lane.length + 1 == tot_count
       lane.push(card.state)
 
-      if @state.values.all? { |l| l.length == Config.values.length }
-        self.finished_at = Time.now
+      if Config.colors.all? { |c| @state.fetch(c, []).length == tot_count }
+        @game.finished_at = Time.now
       end
 
       completes
@@ -143,7 +148,7 @@ class Game < Sequel::Model
       target_player = find_player(target_player_id)
 
       hand = hand_for(target_player)
-      hinted = hand.cards.select { |c| c.is_color?(color) }
+      hinted = hand.cards.select { |c| c.color == color }
 
       if hinted.empty?
         raise ArgumentError,
@@ -162,7 +167,7 @@ class Game < Sequel::Model
       target_player = find_player(target_player_id)
 
       hand = hand_for(target_player)
-      hinted = hand.cards.select { |c| c.is_value?(value) }
+      hinted = hand.cards.select { |c| c.value == value }
 
       if hinted.empty?
         raise ArgumentError,
