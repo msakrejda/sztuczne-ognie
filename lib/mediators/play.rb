@@ -16,7 +16,6 @@ class Mediators::Play < Mediators::Base
 
   def call
     @game.play(@player, card_id)
-    @game.draw(@player)
     @game.save_changes
   end
 end

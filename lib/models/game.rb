@@ -33,15 +33,15 @@ class Game < Sequel::Model
     end
 
     def id
-      @state.fetch(:id)
+      @state.fetch('id')
     end
 
     def color
-      @state.fetch(:color)
+      @state.fetch('color')
     end
 
     def value
-      @state.fetch(:value)
+      @state.fetch('value')
     end
   end
 
@@ -68,25 +68,25 @@ class Game < Sequel::Model
     end
 
     def cards
-      state.fetch(:cards).map { |c| Card.new(c) }
+      state.fetch('cards').map { |c| Card.new(c) }
     end
 
     def add(card)
-      state.fetch(:cards).push(card.state)
+      state.fetch('cards').push(card.state)
     end
 
     def add_hint(card_id:, color: nil, value: nil)
-      hint = { card_id: card_id }
-      hint[:color] = color unless color.nil?
-      hint[:value] = value unless value.nil?
+      hint = { 'card_id' => card_id }
+      hint['color'] = color unless color.nil?
+      hint['value'] = value unless value.nil?
 
-      state[:hints].push(hint).uniq!
+      state['hints'].push(hint).uniq!
     end
 
     def remove(card_id)
       removed = nil
-      state.fetch(:cards).reject! do |c|
-        if c.fetch(:id) == card_id
+      state.fetch('cards').reject! do |c|
+        if c.fetch('id') == card_id
           removed = c
           true
         end
@@ -99,8 +99,7 @@ class Game < Sequel::Model
   end
 
   class Field
-    def initialize(game, state)
-      @game = game
+    def initialize(state)
       @state = state
     end
 
@@ -109,12 +108,15 @@ class Game < Sequel::Model
       if lane.empty?
         card.value == 1
       else
-        lane.last.value + 1 == card.value
+        lane.last['value'] + 1 == card.value
       end
     end
 
     def lane(color)
-      @state.fetch(color, [])
+      unless @state.has_key?(color)
+        @state[color] = []
+      end
+      @state.fetch(color)
     end
 
     def play(card)
@@ -122,21 +124,16 @@ class Game < Sequel::Model
         raise ArgumentError, "Card #{card} is not playable this turn"
       end
 
-      lane = @state[card.color]
-      if lane.nil?
-        lane = []
-        @state[card.color] = lane
-      end
+      lane = self.lane(card.color)
 
-      tot_count = Config.values.length
-      completes = lane.length + 1 == tot_count
+      completes = lane.length + 1 == Config.values.count
       lane.push(card.state)
 
-      if Config.colors.all? { |c| @state.fetch(c, []).length == tot_count }
-        @game.finished_at = Time.now
-      end
-
       completes
+    end
+
+    def completed?
+      Config.colors.all? { |c| @state.fetch(c, []).length == Config.values.count }
     end
   end
 
@@ -185,7 +182,11 @@ class Game < Sequel::Model
 
       if field.playable?(card)
         completed_lane = field.play(card)
-        reclaim_hint if completed_lane
+        if field.completed?
+          finished_at = Time.now
+        elsif completed_lane
+          reclaim_hint
+        end
       else
         dump(card)
         burn_fuse
@@ -227,11 +228,11 @@ class Game < Sequel::Model
   end
 
   def deck
-    @deck ||= Deck.new(state.fetch(:deck))
+    @deck ||= Deck.new(state.fetch('deck'))
   end
 
   def field
-    @field ||= Field.new(self, state.fetch(:field))
+    @field ||= Field.new(self, state.fetch('field'))
   end
 
   def hand_for(player)
@@ -239,8 +240,8 @@ class Game < Sequel::Model
       raise ArgumentError, "Could not find hand for player #{player.name}"
     end
     Hand.new(self,
-             state.fetch(:hands)
-               .find(not_found) { |h| h[:player_id] == player.id })
+             state.fetch('hands')
+               .find(not_found) { |h| h['player_id'] == player.id })
   end
 
   def taking_turn(player)
@@ -278,32 +279,32 @@ class Game < Sequel::Model
       raise ArgumentError, "No hints available"
     end
 
-    state[:hint_counter] -= 1
+    state['hint_counter'] -= 1
   end
 
   def reclaim_hint
-    return if state[:hint_counter] == Config.hint_count
+    return if state['hint_counter'] == Config.hint_count
 
-    state[:hint_counter] += 1
+    state['hint_counter'] += 1
   end
 
   def can_hint?
-    state.fetch(:hint_counter) > 0
+    state.fetch('hint_counter') > 0
   end
 
   def dump(card)
-    state[:discarded].push(card.state)
+    state['discarded'].push(card.state)
   end
 
   def burn_fuse
-    state[:fuse_counter] -= 1
-    unless state[:fuse_counter] > 0
+    state['fuse_counter'] -= 1
+    unless state['fuse_counter'] > 0
       self.finished_at = Time.now
     end
   end
 
   def can_discard?
-    state.fetch(:hint_counter) < Config.hint_count
+    state.fetch('hint_counter') < Config.hint_count
   end
 
   def hand_size
@@ -316,7 +317,8 @@ class Game < Sequel::Model
 
   def deal
     hands = players.each_with_object({}) do |player, obj|
-      obj[player.id] = Hand.new(player_id: player.id, cards: [], hints: [])
+      obj[player.id] = Hand.new('player_id' => player.id,
+                                'cards' => [], 'hints' => [])
     end
     hand_size.times do |n|
       players.each do |p|
@@ -324,18 +326,18 @@ class Game < Sequel::Model
         hand.add(deck.draw)
       end
     end
-    state[:hands] = hands.values.map(&:state)
+    state['hands'] = hands.values.map(&:state)
   end
 
   def new_state
-    { ready: [],
+    { 'ready' => [],
 
-      fuse_counter: Config.fuse_len,
-      hint_counter: Config.hint_count,
-      deck: new_deck.shuffle,
-      field: {},
-      discarded: [],
-      hands: [] }
+      'fuse_counter' => Config.fuse_len,
+      'hint_counter' => Config.hint_count,
+      'deck' => new_deck.shuffle,
+      'field' => {},
+      'discarded' => [],
+      'hands' => [] }
   end
 
   def sorted_players
@@ -343,7 +345,7 @@ class Game < Sequel::Model
   end
 
   def current_player
-    player_id = state[:current_player]
+    player_id = state['current_player']
     if player_id.nil?
       sorted_players.first
     else
@@ -352,7 +354,7 @@ class Game < Sequel::Model
   end
 
   def current_player=(value)
-    state[:current_player] = value.id
+    state['current_player'] = value.id
   end
 
   def next_player
@@ -373,16 +375,16 @@ class Game < Sequel::Model
   end
 
   def last_player_id=(player)
-    state[:last_player] = player.id
+    state['last_player'] = player.id
   end
 
   def last_player_id
-    state.fetch(:last_player)
+    state.fetch('last_player')
   end
 
   def new_deck
     Config.colors.product(Config.values).map.each_with_index do |(color, value), index|
-      Card.new(card_id: index, color: color, value: value)
+      Card.new('card_id' => index, 'color' => color, 'value' => value)
     end
   end
 end
