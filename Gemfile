@@ -19,6 +19,10 @@ gem "sinatra-contrib", require: ["sinatra/namespace", "sinatra/reloader"]
 gem "sinatra-router"
 gem "sucker_punch"
 
+# ^ pliny -- ours v
+
+gem "sinatra-websocket"
+
 group :development, :test do
   gem "pry-byebug"
 end

@@ -1,0 +1,7 @@
+ * if you create a game, you decide when to start it (after others join)
+ 
+ * list pending games
+ * join (pending) game
+ * leave a game you've joined
+ * mark ready?
+ * create game

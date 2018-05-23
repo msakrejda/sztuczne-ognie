@@ -36,6 +36,7 @@ module Config
 
   override :fuse_len,         3, int
   override :hint_count,       7, int
+  override :max_players       5, int
 
   def self.colors
     %w(red green blue white yellow)
